@@ -17,18 +17,6 @@ import (
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
-// input
-// var qs = []*survey.Question{
-// 	{
-// 		Name: "Information",
-// 		Prompt: &survey.MultiSelect{
-// 			Message: "Information to download:",
-// 			Options: []string{"Organization", "Apps and Environments", "Users and Roles", "VPC/VPN", "Runtime Fabric", "Audit Log", "MQ"},
-// 			Default: []string{"Organization", "Apps and Environments", "Users and Roles", "VPC/VPN", "Runtime Fabric", "Audit Log", "MQ"},
-// 		},
-// 	},
-// }
-
 func main() {
 	args := os.Args[1:]
 
