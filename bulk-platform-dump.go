@@ -6,18 +6,60 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 
+	"github.com/blang/semver"
 	"github.com/buger/jsonparser"
 	"github.com/fatih/color"
+	"github.com/pierrre/archivefile/zip"
+	"github.com/rhysd/go-github-selfupdate/selfupdate"
 	"gopkg.in/AlecAivazis/survey.v1"
 )
 
+const version = "1.0.0"
+
+func updateToLatestVersion() {
+	v := semver.MustParse(version)
+	latest, err := selfupdate.UpdateSelf(v, "mulesoft-labs/bulk-platform-dump")
+	if err != nil {
+		log.Println("Binary update failed:", err)
+		return
+	}
+	if latest.Version.Equals(v) {
+		log.Println("Current binary is the latest version", version)
+	} else {
+		log.Println("Successfully updated to version", latest.Version)
+		log.Println("Release note:\n", latest.ReleaseNotes)
+	}
+}
+
+func zipWorkingFolder(workingFolder string) {
+	defer func() {
+		_ = os.RemoveAll(workingFolder)
+	}()
+
+	fileCount := 0
+	outFilePath := workingFolder + ".zip"
+
+	progress := func(archivePath string) {
+		fileCount++
+	}
+
+	err := zip.ArchiveFile(workingFolder, outFilePath, progress)
+	if err != nil {
+		panic(err)
+	}
+	color.HiMagenta("Zip " + outFilePath + " created with " + strconv.Itoa(fileCount) + " files.")
+}
+
 func main() {
+	updateToLatestVersion()
+
 	args := os.Args[1:]
 
 	if len(args) < 2 {
@@ -30,11 +72,10 @@ func main() {
 
 	orgID := args[0]
 	token := args[1]
-	color.HiYellow("\nDumping organization " + orgID)
 	if isValidToken(token) {
 		info := []string{}
 		prompt := &survey.MultiSelect{
-			Message: "Information to download:",
+			Message: "Dumping organization " + orgID + " - Information to download:",
 			Options: []string{"Organization", "Apps and Environments", "Users and Roles", "VPC/VPN", "Runtime Fabric", "Audit Log", "MQ"},
 			Default: []string{"Organization", "Apps and Environments", "Users and Roles", "VPC/VPN", "Runtime Fabric", "Audit Log", "MQ"},
 		}
@@ -70,6 +111,7 @@ func main() {
 				extractMQ(orgID, token, workingFolder)
 			}
 		}
+		zipWorkingFolder(workingFolder)
 	} else {
 		color.Red("Token invalid.")
 	}

@@ -10,3 +10,7 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+*.tar.gz
+.DS_Store
+bulk-platform-dump
+dump_*
